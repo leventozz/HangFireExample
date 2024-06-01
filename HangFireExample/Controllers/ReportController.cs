@@ -1,4 +1,5 @@
 using Hangfire;
+using Hangfire.States;
 using Microsoft.AspNetCore.Mvc;
 
 namespace HangFireExample.Controllers
@@ -19,7 +20,15 @@ namespace HangFireExample.Controllers
         {
             IBackgroundJobClient client = new BackgroundJobClient();
             var jobId = client.Enqueue<ReportService>(job => job.GetReportAsync(CancellationToken.None));
-            return Accepted("BackgroundJob Started. jobId:" + jobId);
+            return Ok("BackgroundJob Started. jobId:" + jobId);
+        }
+
+        [HttpGet("GetJobDetail")]
+        public async Task<IActionResult> GetJobDetail(string jobId)
+        {
+            var jobDetails = JobStorage.Current.GetMonitoringApi().JobDetails(jobId);
+            var state = jobDetails.History.OrderByDescending(h => h.CreatedAt).First().StateName;
+            return Ok(state);
         }
     }
 
